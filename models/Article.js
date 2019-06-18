@@ -15,6 +15,10 @@ var ArticleSchema = new Schema({
     type: String,
     required: true
   },
+  article: {
+    type: String,
+    required: true
+  },
   
   note: {
     type: Schema.Types.ObjectId,
@@ -23,6 +27,6 @@ var ArticleSchema = new Schema({
 });
 
 
-var article = mongoose.model("Article", ArticleSchema);
+var Article = mongoose.model("Article", ArticleSchema);
 
 module.exports = Article;
