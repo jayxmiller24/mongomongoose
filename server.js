@@ -34,38 +34,49 @@ app.use(express.static("public"));
 
 mongoose.connect("mongodb://localhost/scraperDB", { useNewUrlParser: true });
 
-app.get("/scrape", function (req, res) {
-
-    axios.get("https://www.ign.com/articles?tags=news").then(function (response) {
-
-        var $ = cheerio.load(response.data);
-        let result = {};
-
-        $("div.listElmnt-blogItem").each(function (i, element) {
-
-           result.title = $(element).children(".listElmnt-storyHeadline").text();
-            result.article = $(element).find("p").text();
-            result.link = $(element).children("p").children("a").attr("href");
-
+app.get("/scrape", function(req, res) {
+    
+    axios.get("https://www.ign.com/articles?tags=news").then(function(response) {
+      
+      var $ = cheerio.load(response.data);
+        
+      
+      $("div.listElmnt").each(function(i, element) {
+        
+        var result = {};
+  
+        result.title = $(element).children(".listElmnt-blogItem").find("a").text();
+    
+        result.link = $(element).children(".listElmnt-blogItem").find("a").attr("href");
+          result.article = $(element).children(".listElmnt-blogItem").find("p").text();
             console.log(result);
-
-            db.Article.create(result).then(function (dbArticle) {
-
-                console.log(dbArticle);
-
-            }).catch(function (err) {
-                res.json(err);
-            });
-            db.Article.find({}).then(function(dbArticle){
-                res.json(dbArticle);
-            })
-            .catch(function(err){
-                res.json(err);
-            })
-        });
-
+            
+       
+        db.Article.create(result)
+          .then(function(dbArticle) {
+           
+            console.log(dbArticle);
+          })
+          .catch(function(err) {
+            
+            console.log(err);
+          });
+      });
+  
+      
+      res.json("Scrape Complete");
     });
-});
+  });
+
+app.get("/articles", function (req, res){
+    db.Article.find({}).then(function (dbArticle) {
+        res.json(dbArticle);
+    })
+        .catch(function (err) {
+            res.json(err);
+        })
+})
+
 app.get("/notes", function (req, res) {
 
     db.Note.find({})
