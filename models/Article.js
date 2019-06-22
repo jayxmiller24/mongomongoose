@@ -19,6 +19,14 @@ var ArticleSchema = new Schema({
     type: String,
     required: true
   },
+  isSaved: {
+    type: Boolean,
+    default: false
+  },
+  articleCreated: {
+    type: Date,
+    default: Date.now
+  },
   
   note: {
     type: Schema.Types.ObjectId,

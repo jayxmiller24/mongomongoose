@@ -3,6 +3,10 @@ var logger = require("morgan");
 var mongoose = require("mongoose");
 var cheerio = require("cheerio");
 var axios = require("axios");
+var moment = require("moment");
+
+
+
 
 
 
@@ -34,48 +38,54 @@ app.use(express.static("public"));
 
 mongoose.connect("mongodb://localhost/scraperDB", { useNewUrlParser: true });
 
-app.get("/scrape", function(req, res) {
-    
-    axios.get("https://www.ign.com/articles?tags=news").then(function(response) {
-      
-      var $ = cheerio.load(response.data);
+app.get("/scrape", function (req, res) {
+
+    axios.get("https://www.ign.com/articles?tags=news").then(function (response) {
+
+        const $ = cheerio.load(response.data);
+
+            
+        $(".listElmnt-blogItem").each(function (i, element) {
+            let result = {}
+            
+            
+            result.title = $(element).find("a").text();
+            
+            result.link = $(element).find("a").attr("href");
+            result.article = $(element).find("p").text();
+            result.articleCreated = moment().format("YYYY MM DD hh:mm:ss");
         
-      
-      $("div.listElmnt").each(function(i, element) {
-        
-        var result = {};
-  
-        result.title = $(element).children(".listElmnt-blogItem").find("a").text();
-    
-        result.link = $(element).children(".listElmnt-blogItem").find("a").attr("href");
-          result.article = $(element).children(".listElmnt-blogItem").find("p").text();
+
             console.log(result);
-            
-       
-        db.Article.create(result)
-          .then(function(dbArticle) {
-           
-            console.log(dbArticle);
-          })
-          .catch(function(err) {
-            
-            console.log(err);
-          });
-      });
-  
-      
-      res.json("Scrape Complete");
+
+            db.Article.create(result)
+                .then(function (dbArticle) {
+
+                    console.log(dbArticle);
+                })
+                .catch(function (err) {
+
+                    console.log(err);
+                });
+                
+
+        });
+        res.json("Scrape Complete");
     });
+});
+app.get("/articles", function(req, res) {
+  
+    db.Article
+      .find({})
+      .sort({articleCreated:-1})
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        res.json(err);
+      });
   });
 
-app.get("/articles", function (req, res){
-    db.Article.find({}).then(function (dbArticle) {
-        res.json(dbArticle);
-    })
-        .catch(function (err) {
-            res.json(err);
-        })
-})
 
 app.get("/notes", function (req, res) {
 
@@ -157,10 +167,10 @@ app.post("/articles/:id", function (req, res) {
 
 
 
-app.put("/delete/:id", function (req, res) {
+app.delete("/delete/:id", function (req, res) {
 
     db.Article
-        .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: false } })
+        .deleteOne({ _id: req.params.id }, { $set: { isSaved: false } })
         .then(function (dbArticle) {
             res.json(dbArticle);
         })
@@ -168,6 +178,19 @@ app.put("/delete/:id", function (req, res) {
             res.json(err);
         });
 });
+
+app.delete("/delete", function (req, res) {
+
+    db.Article
+        .deleteMany({})
+        .then(function (dbArticle) {
+            res.json(dbArticle);
+        })
+        .catch(function (err) {
+            res.json(err);
+        });
+});
+
 
 app.listen(PORT, function () {
     console.log("App running on port " + PORT + "!");
